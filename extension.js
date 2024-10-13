@@ -3,40 +3,19 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const express = require("express");
 const http = require("http"); // Add this line to import http
+const { io } = require("socket.io-client");
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const app = express();
+  const socket = io("http://localhost:3000");
 
-  app.use(express.json());
-  app.use(cors());
-
-  const server = http.createServer(app);
-
-  // Setting up Socket.io with CORS
-  const io = new Server(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
-    },
-  });
-
-  io.on("connection", (socket) => {
-    console.log("User connected");
-    socket.on("join", (room) => socket.join(room));
-    socket.on("ping", () => console.log(12));
-    socket.on("reqFileSystem", () => fileSystemRetreive(socket));
-    socket.on("reqFileContent", (name) => {
-      console.log(`getting contents of ${name}`);
-      getFileContent(socket, name);
-    });
-  });
-
-  // Start the Express server on port 5000
-  server.listen(5000, async () => {
-    console.log("App running at port 5000");
+  socket.on("ping", () => console.log(12));
+  socket.on("reqFileSystemFromExtension", () => fileSystemRetreive(socket));
+  socket.on("reqFileContentFromExtension", (name) => {
+    console.log(`getting contents of ${name}`);
+    getFileContent(socket, name);
   });
 
   console.log('Congratulations, your extension "codeshare" is now active!');
@@ -68,7 +47,7 @@ const getFileContent = async (socket, name) => {
     const doc = await vscode.workspace.openTextDocument(path);
     const text = doc.getText();
     console.log("Contents read"); // optional
-    socket.emit("sendFileContent", text);
+    socket.emit("sendFileContentFromExtension", text);
   } catch (error) {
     vscode.window.showErrorMessage(`Error: ${error}`);
   }
@@ -98,7 +77,7 @@ const fileSystemRetreive = async (socket) => {
       const folderUri = workspaceFolders[0].uri;
       const files = await folderSearch(folderUri);
       console.log(files);
-      socket.emit("sendFileSystem", files);
+      socket.emit("sendFileSystemFromExtension", files);
       vscode.window.showInformationMessage("Files fetched from the workspace!");
     } else {
       vscode.window.showInformationMessage("No workspace folder found.");

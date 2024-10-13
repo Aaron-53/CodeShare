@@ -9,23 +9,23 @@ function App() {
 
   const handleFileClick = (name) => {
     console.log(`${name} clicked`);
-    socket.current.emit("reqFileContent", name);
+    socket.current.emit("reqFileContentFromServer", name);
   };
 
   useEffect(() => {
     // Initialize socket only once
-    socket.current = io("http://localhost:5000");
+    socket.current = io("http://localhost:3000");
 
     // Emit the 'reqFileSystem' event only once when the component mounts
-    socket.current.emit("reqFileSystem", { message: "Requesting file system data" });
+    socket.current.emit("reqFileSystemFromServer", { message: "Requesting file system data" });
 
     // Listen for the 'sendFileSystem' event and update state with file data
-    socket.current.on("sendFileSystem", (data) => {
+    socket.current.on("sendFileSystemFromServer", (data) => {
       setFiles(data);
       console.log(data);
     });
 
-    socket.current.on("sendFileContent", (content) => {
+    socket.current.on("sendFileContentFromServer", (content) => {
       console.log("received contents in client");
       setContent(content);
     });
