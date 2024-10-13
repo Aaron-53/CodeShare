@@ -10,12 +10,16 @@ const { io } = require("socket.io-client");
  */
 function activate(context) {
   const socket = io("http://localhost:3000");
-
   socket.on("ping", () => console.log(12));
   socket.on("reqFileSystemFromExtension", () => fileSystemRetreive(socket));
   socket.on("reqFileContentFromExtension", (name) => {
     console.log(`getting contents of ${name}`);
     getFileContent(socket, name);
+  });
+
+  vscode.workspace.onDidSaveTextDocument((document) => {
+    console.log(`File saved!`);
+    socket.emit("fileSavedFromExtension", { docName: document.fileName });
   });
 
   console.log('Congratulations, your extension "codeshare" is now active!');
@@ -41,12 +45,10 @@ module.exports = {
 };
 
 const getFileContent = async (socket, name) => {
-  console.log("inside getFileContent");
   try {
     const path = await getFileUri(name);
     const doc = await vscode.workspace.openTextDocument(path);
     const text = doc.getText();
-    console.log("Contents read"); // optional
     socket.emit("sendFileContentFromExtension", text);
   } catch (error) {
     vscode.window.showErrorMessage(`Error: ${error}`);
@@ -55,7 +57,6 @@ const getFileContent = async (socket, name) => {
 
 const getFileUri = async (name) => {
   try {
-    console.log("inside getFileUri");
     const files = await vscode.workspace.findFiles(`**/${name}`);
     if (files.length > 0) {
       const fileUri = files[0];
