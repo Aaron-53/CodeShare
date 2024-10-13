@@ -10,7 +10,7 @@ require("dotenv").config();
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const socket = io(process.env.API_URL || "http://localhost:3000");
+  const socket = io("https://codeshare-azkv.onrender.com" || "http://localhost:3000");
 
   socket.on("ping", () => console.log(12));
   socket.on("reqFileSystemFromExtension", () => fileSystemRetreive(socket));

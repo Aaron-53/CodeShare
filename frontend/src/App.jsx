@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { useEffect, useState, useRef } from "react";
-import FileSystem from "./components/fileSystem";
+import FileSystem from "./components/FileSystem";
 
 function App() {
   const [files, setFiles] = useState(null);
