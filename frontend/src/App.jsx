@@ -18,6 +18,7 @@ function App() {
 
   useEffect(() => {
     // Initialize socket only once
+    console.log(import.meta.env.VITE_API_URL);
     socket.current = io(import.meta.env.VITE_API_URL);
 
     // Emit the 'reqFileSystem' event only once when the component mounts
