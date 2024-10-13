@@ -4,13 +4,14 @@ const cors = require("cors");
 const express = require("express");
 const http = require("http"); // Add this line to import http
 const { io } = require("socket.io-client");
+require("dotenv").config();
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const socket = io("http://localhost:3000");
-
+  const socket = io(process.env.API_URL || "http://localhost:3000");
+  console.log(process.env.API_URL);
   socket.on("ping", () => console.log(12));
   socket.on("reqFileSystemFromExtension", () => fileSystemRetreive(socket));
   socket.on("reqFileContentFromExtension", (name) => {

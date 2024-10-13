@@ -14,7 +14,7 @@ function App() {
 
   useEffect(() => {
     // Initialize socket only once
-    socket.current = io("http://localhost:3000");
+    socket.current = io(import.meta.env.VITE_API_URL);
 
     // Emit the 'reqFileSystem' event only once when the component mounts
     socket.current.emit("reqFileSystemFromServer", { message: "Requesting file system data" });
