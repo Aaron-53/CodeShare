@@ -13,26 +13,40 @@ function FileSystem({ files, onFileClick }) {
   return (
     <ul>
       {files &&
-        files.map((file, index) => {
-          const isOpen = openFolders[file.name];
+        files
+          .filter(file => !file.isHidden) // Filter out hidden items
+          .map((file, index) => {
+            if (file.isFolder) {
+              const isOpen = openFolders[file.name];
 
-          return file.isFolder ? (
-            <li key={index}>
-              <button onClick={() => toggleFolder(file.name)}>
-                {file.name}
-              </button>
-              {isOpen && file.subFolder && (
-                <FileSystem files={file.subFolder} onFileClick={onFileClick} />
-              )}
-            </li>
-          ) : (
-            <li key={index}>
-              <button onClick={() => onFileClick(file.name)}>
-                {file.name}
-              </button>
-            </li>
-          );
-        })}
+              return (
+                <li key={index}>
+                  <button onClick={() => toggleFolder(file.name)}>
+                    {file.name}
+                  </button>
+                  {isOpen && file.subFolder && (
+                    <FileSystem files={file.subFolder} onFileClick={onFileClick} />
+                  )}
+                </li>
+              );
+            }
+            return null; // Skip rendering files here
+          })}
+      {files &&
+        files
+          .filter(file => !file.isHidden) // Filter out hidden items
+          .map((file, index) => {
+            if (!file.isFolder) {
+              return (
+                <li key={index}>
+                  <button onClick={() => onFileClick(file.name)}>
+                    {file.name}
+                  </button>
+                </li>
+              );
+            }
+            return null; // Skip rendering folders here
+          })}
     </ul>
   );
 }

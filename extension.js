@@ -93,20 +93,37 @@ const fileSystemRetreive = async (socket) => {
 
 const folderSearch = async (uri) => {
   const files = await vscode.workspace.fs.readDirectory(uri);
-  let subFolder = {};
   const formattedFiles = await Promise.all(
     files.map(async ([name, type]) => {
+      const newUri = vscode.Uri.joinPath(uri, name);
+      const isHidden = await checkIfHidden(newUri); // Check if the file is hidden
+
+      let subFolder = [];
       if (type === vscode.FileType.Directory) {
-        const newUri = vscode.Uri.joinPath(uri, name);
         subFolder = await folderSearch(newUri);
       }
+
       return {
         name: name,
         isFolder: type === vscode.FileType.Directory,
         opened: false,
+        isHidden: isHidden, // Add isHidden property
         subFolder: subFolder,
       };
     })
   );
   return formattedFiles;
 };
+
+// Function to check if a file is hidden
+const checkIfHidden = async (uri) => {
+  try {
+    const stats = await vscode.workspace.fs.stat(uri);
+    // Check if the name starts with '.' (common for hidden files)
+    return uri.path.split('/').pop().startsWith('.');
+  } catch (error) {
+    console.error(`Error checking if hidden: ${error}`);
+    return false; // Default to false if there's an error
+  }
+};
+

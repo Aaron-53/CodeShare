@@ -56,13 +56,15 @@ function App() {
   }, []); // Empty dependency array ensures this runs only on mount
 
   return (
-    <div>
-      <h3>File Structure</h3>
-      {files && (
-        <div>
-          <FileSystem files={files} onFileClick={handleFileClick} />
-        </div>
-      )}
+    <div className="flex flex-col">
+      <div className="w-[20vw]">
+        <h3>File Structure</h3>
+        {files && (
+          <div>
+            <FileSystem files={files} onFileClick={handleFileClick} />
+          </div>
+        )}
+      </div>
       <div>
         <h3>Content</h3>
         <pre>{content}</pre>
