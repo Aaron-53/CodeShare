@@ -27,7 +27,11 @@ function activate(context) {
     console.log("User connected");
     socket.on("join", (room) => socket.join(room));
     socket.on("ping", () => console.log(12));
-    socket.on("reqFileSystem", fileSystemRetreive(socket));
+    socket.on("reqFileSystem", () => fileSystemRetreive(socket));
+    socket.on("reqFileContent", (name) => {
+      console.log(`getting contents of ${name}`);
+      getFileContent(socket, name);
+    });
   });
 
   // Start the Express server on port 5000
@@ -57,6 +61,36 @@ module.exports = {
   deactivate,
 };
 
+const getFileContent = async (socket, name) => {
+  console.log("inside getFileContent");
+  try {
+    const path = await getFileUri(name);
+    const doc = await vscode.workspace.openTextDocument(path);
+    const text = doc.getText();
+    console.log("Contents read"); // optional
+    socket.emit("sendFileContent", text);
+  } catch (error) {
+    vscode.window.showErrorMessage(`Error: ${error}`);
+  }
+};
+
+const getFileUri = async (name) => {
+  try {
+    console.log("inside getFileUri");
+    const files = await vscode.workspace.findFiles(`**/${name}`);
+    if (files.length > 0) {
+      const fileUri = files[0];
+      console.log(`File found: ${fileUri.fsPath}`);
+      return fileUri;
+    } else {
+      vscode.window.showErrorMessage(`File "${filename}" not found.`);
+      return null;
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage(`Error: ${error}`);
+  }
+};
+
 const fileSystemRetreive = async (socket) => {
   try {
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -81,7 +115,6 @@ const folderSearch = async (uri) => {
   const formattedFiles = await Promise.all(
     files.map(async ([name, type]) => {
       if (type === vscode.FileType.Directory) {
-        
         const newUri = vscode.Uri.joinPath(uri, name);
         subFolder = await folderSearch(newUri);
       }

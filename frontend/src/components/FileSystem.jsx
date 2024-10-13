@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function FileSystem({ files }) {
+function FileSystem({ files, onFileClick }) {
   const [openFolders, setOpenFolders] = useState({});
 
   const toggleFolder = (name) => {
@@ -22,12 +22,14 @@ function FileSystem({ files }) {
                 {file.name}
               </button>
               {isOpen && file.subFolder && (
-                <FileSystem files={file.subFolder} />
+                <FileSystem files={file.subFolder} onFileClick={onFileClick} />
               )}
             </li>
           ) : (
             <li key={index}>
-              <p>{file.name}</p>
+              <button onClick={() => onFileClick(file.name)}>
+                {file.name}
+              </button>
             </li>
           );
         })}
