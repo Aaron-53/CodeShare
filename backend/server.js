@@ -22,22 +22,22 @@ io.on("connection", (socket) => {
 
   socket.on("reqFileSystemFromServer", (msg) => {
     console.log("FileSystemRequest from", socket.id);
-    io.emit("reqFileSystemFromExtension", msg);
+    io.emit("reqFileSystemFromExtension", socket.id);
   });
 
   socket.on("reqFileContentFromServer", (name) => {
     console.log("FileContentRequest from", socket.id);
-    io.emit("reqFileContentFromExtension", name);
+    io.emit("reqFileContentFromExtension", socket.id);
   });
 
   socket.on("sendFileSystemFromExtension", (msg) => {
     console.log("SendingFileSystem to", socket.id);
-    io.emit("sendFileSystemFromServer", msg);
+    io.to(msg).emit("sendFileSystemFromServer", msg);
   });
 
   socket.on("sendFileContentFromExtension", (msg) => {
-    console.log("SendingFileContent to", socket.id);
-    io.emit("sendFileContentFromServer", msg);
+    console.log("SendingFileContent to", msg);
+    io.to(msg).emit("sendFileContentFromServer", msg);
   });
 
   socket.on("fileSavedFromExtension", (data) => {
