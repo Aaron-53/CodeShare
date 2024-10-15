@@ -10,7 +10,7 @@ require("dotenv").config();
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const socket = io("http://localhost:3000");
+  const socket = io("https://codeshare-azkv.onrender.com");
   socket.on('connect', () => {
     socket.emit("Extension");
 });
