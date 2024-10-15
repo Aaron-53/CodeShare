@@ -10,17 +10,19 @@ require("dotenv").config();
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const socket = io("https://codeshare-azkv.onrender.com" || "http://localhost:3000");
+  const socket = io("http://localhost:3000");
+  socket.on('connect', () => {
+    socket.emit("Extension");
+});
 
-  socket.on("ping", () => console.log(12));
-  socket.on("reqFileSystemFromExtension", () => fileSystemRetreive(socket));
-  socket.on("reqFileContentFromExtension", (name) => {
-    console.log(`getting contents of ${name}`);
-    getFileContent(socket, name);
+  socket.on("reqFileSystemFromExtension", (msg) => {
+    console.log("req")
+    fileSystemRetreive(socket, msg)});
+  socket.on("reqFileContentFromExtension", (msg) => {
+    getFileContent(socket, msg);
   });
 
   vscode.workspace.onDidSaveTextDocument((document) => {
-    console.log(`File saved!`);
     socket.emit("fileSavedFromExtension", { docName: document.fileName });
   });
 
@@ -46,12 +48,12 @@ module.exports = {
   deactivate,
 };
 
-const getFileContent = async (socket, name) => {
+const getFileContent = async (socket, msg) => {
   try {
-    const path = await getFileUri(name);
+    const path = await getFileUri(msg.name);
     const doc = await vscode.workspace.openTextDocument(path);
     const text = doc.getText();
-    socket.emit("sendFileContentFromExtension", text);
+    socket.emit("sendFileContentFromExtension", {text, socket:msg.socket});
   } catch (error) {
     vscode.window.showErrorMessage(`Error: ${error}`);
   }
@@ -62,7 +64,6 @@ const getFileUri = async (name) => {
     const files = await vscode.workspace.findFiles(`**/${name}`);
     if (files.length > 0) {
       const fileUri = files[0];
-      console.log(`File found: ${fileUri.fsPath}`);
       return fileUri;
     } else {
       vscode.window.showErrorMessage(`File "${filename}" not found.`);
@@ -73,15 +74,13 @@ const getFileUri = async (name) => {
   }
 };
 
-const fileSystemRetreive = async (socket) => {
+const fileSystemRetreive = async (socket, id) => {
   try {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
       const folderUri = workspaceFolders[0].uri;
       const files = await folderSearch(folderUri);
-      console.log(files);
-      socket.emit("sendFileSystemFromExtension", files);
-      vscode.window.showInformationMessage("Files fetched from the workspace!");
+      socket.emit("sendFileSystemFromExtension", {files, socket:id});
     } else {
       vscode.window.showInformationMessage("No workspace folder found.");
     }
