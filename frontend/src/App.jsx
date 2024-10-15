@@ -67,7 +67,7 @@ function App() {
       </div>
       <div>
         <h3>Content</h3>
-        <pre>{content}</pre>
+        <pre className="text-2xl">{content}</pre>
       </div>
     </div>
   );
