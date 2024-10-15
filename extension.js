@@ -53,7 +53,7 @@ const getFileContent = async (socket, msg) => {
     const path = await getFileUri(msg.name);
     const doc = await vscode.workspace.openTextDocument(path);
     const text = doc.getText();
-    socket.emit("sendFileContentFromExtension", {text, socket:msg.socket});
+    socket.emit("sendFileContentFromExtension", {text, socket:msg.socket, name:msg.name});
   } catch (error) {
     vscode.window.showErrorMessage(`Error: ${error}`);
   }

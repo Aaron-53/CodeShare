@@ -37,12 +37,12 @@ io.on("connection", (socket) => {
 
   socket.on("sendFileSystemFromExtension", (msg) => {
     console.log("SendingFileSystem to", msg.socket);
-    io.to(msg.socket).emit("sendFileSystemFromServer", msg.files);
+    io.emit("sendFileSystemFromServer", msg.files);
   });
 
-  socket.on("sendFileContentFromExtension", (msg) => {
-    console.log("SendingFileContent to", msg.socket);
-    io.to(msg.socket).emit("sendFileContentFromServer", msg.text);
+  socket.on("sendFileContentFromExtension", (data) => {
+    console.log("SendingFileContent to", data.socket);
+    io.to(data.socket).emit("sendFileContentFromServer", {content:data.text, name:data.name});
   });
 
   socket.on("fileSavedFromExtension", (data) => {

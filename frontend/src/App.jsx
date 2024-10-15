@@ -11,7 +11,6 @@ function App() {
 
   const handleFileClick = (name) => {
     console.log(`${name} clicked`);
-    setOpenFile(name);
     openFileRef.current = name;
     socket.current.emit("reqFileContentFromServer", name);
   };
@@ -31,8 +30,9 @@ function App() {
       console.log(data);
     });
 
-    socket.current.on("sendFileContentFromServer", (content) => {
-      setContent(content);
+    socket.current.on("sendFileContentFromServer", (data) => {
+      setOpenFile(data.name);
+      setContent(data.content);
       console.log("Received file content");
     });
 
@@ -67,6 +67,7 @@ function App() {
       </div>
       <div>
         <h3>Content</h3>
+         <h3 className="text-center">{openFile}</h3>
         <pre className="text-2xl">{content}</pre>
       </div>
     </div>
