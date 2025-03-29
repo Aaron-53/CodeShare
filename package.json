@@ -9,7 +9,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -52,5 +51,8 @@
   "type": "git",
   "url": "https://github.com/Aaron-53/CodeShare.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "activationEvents": [
+    "*"
+  ]
 }

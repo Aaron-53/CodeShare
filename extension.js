@@ -2,60 +2,86 @@ const vscode = require("vscode");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const express = require("express");
-const http = require("http"); // Add this line to import http
+const http = require("http");
 const { io } = require("socket.io-client");
 require("dotenv").config();
 
-let cachedFileSystem = null; // Cache for file system data
-const CHUNK_SIZE = 1000; // Number of files per chunk
-let currentRoomCode = null; // Add this to store the room code
+console.log(13)
+
+let cachedFileSystem = null;
+const CHUNK_SIZE = 1000;
+let currentRoomCode = null;
+let socket = null; // Make socket globally accessible
+let connectButton = null; // Make button globally accessible
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  const socket = io("http://localhost:3000");
-  socket.on('connect', () => {
-    socket.emit("Extension");
-  });
+  console.log(12)  // Create status bar item
+  connectButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  connectButton.text = "$(plug) Connect CodeShare";
+  connectButton.tooltip = "Click to connect to CodeShare";
+  connectButton.command = 'codeshare.connect';
+  connectButton.show();
 
-  socket.on('roomCode', (code) => {
-    currentRoomCode = code; // Store the room code
-    vscode.window.showInformationMessage(`Room Code: ${code}`);
-    console.log(`Connected to room: ${code}`);
-  });
+  // Register connect command
+  let connectDisposable = vscode.commands.registerCommand('codeshare.connect', () => {
+    if (!socket || !socket.connected) {
+      socket = io("http://localhost:3000");
+      
+      socket.on('connect', () => {
+        socket.emit("Extension");
+        connectButton.text = "$(check) CodeShare Connected";
+        vscode.window.showInformationMessage("Connected to CodeShare!");
+      });
 
-  // Initialize file system cache when extension activates
-  initializeFileSystem();
+      socket.on('roomCode', (code) => {
+        currentRoomCode = code;
+        vscode.window.showInformationMessage(`Room Code: ${code}`);
+        console.log(`Connected to room: ${code}`);
+      });
 
-  // Update cache when files change
-  vscode.workspace.onDidChangeWorkspaceFolders(() => initializeFileSystem());
-  vscode.workspace.onDidCreateFiles(() => initializeFileSystem());
-  vscode.workspace.onDidDeleteFiles(() => initializeFileSystem());
-  vscode.workspace.onDidRenameFiles(() => initializeFileSystem());
+      // Initialize file system cache when extension activates
+      initializeFileSystem();
 
-  socket.on("reqFileSystemFromExtension", (msg) => {
-    console.log(`Requesting file system from extension by socket ${msg} in room ${currentRoomCode}`);
-    if (cachedFileSystem) {
-      console.log(`Sending cached file system in chunks for socket ${msg} in room ${currentRoomCode}`);
-      sendFileSystemInChunks(socket, cachedFileSystem, msg);
+      // Update cache when files change
+      vscode.workspace.onDidChangeWorkspaceFolders(() => initializeFileSystem());
+      vscode.workspace.onDidCreateFiles(() => initializeFileSystem());
+      vscode.workspace.onDidDeleteFiles(() => initializeFileSystem());
+      vscode.workspace.onDidRenameFiles(() => initializeFileSystem());
+
+      socket.on("reqFileSystemFromExtension", (msg) => {
+        console.log(`Requesting file system from extension by socket ${msg} in room ${currentRoomCode}`);
+        if (cachedFileSystem) {
+          console.log(`Sending cached file system in chunks for socket ${msg} in room ${currentRoomCode}`);
+          sendFileSystemInChunks(socket, cachedFileSystem, msg);
+        } else {
+          fileSystemRetreive(socket, msg);
+        }
+      });
+
+      socket.on("reqFileContentFromExtension", (msg) => {
+        getFileContent(socket, msg);
+      });
+
+      socket.on('disconnect', () => {
+        connectButton.text = "$(plug) Connect CodeShare";
+        vscode.window.showInformationMessage("Disconnected from CodeShare");
+      });
+
+      vscode.workspace.onDidChangeTextDocument((document) => {
+        socket.emit("fileSavedFromExtension", { docName: document.fileName, roomCode: currentRoomCode });
+      });
+      vscode.workspace.onDidCreateFiles((document) => {
+        socket.emit("fileSavedFromExtension", { docName: document.fileName, roomCode: currentRoomCode });
+      });
+
+      console.log(`Extension "codeshare" is now active in room ${currentRoomCode}!`);
     } else {
-      fileSystemRetreive(socket, msg);
+      vscode.window.showInformationMessage("Already connected to CodeShare!");
     }
   });
-
-  socket.on("reqFileContentFromExtension", (msg) => {
-    getFileContent(socket, msg);
-  });
-
-  vscode.workspace.onDidChangeTextDocument((document) => {
-    socket.emit("fileSavedFromExtension", { docName: document.fileName, roomCode: currentRoomCode });
-  });
-  vscode.workspace.onDidCreateFiles((document) => {
-    socket.emit("fileSavedFromExtension", { docName: document.fileName, roomCode: currentRoomCode });
-  });
-
-  console.log(`Extension "codeshare" is now active in room ${currentRoomCode}!`);
 
   // Register VS Code commands
   const disposables = [
@@ -68,15 +94,20 @@ function activate(context) {
       } else {
         vscode.window.showInformationMessage("No active room code");
       }
-    })
+    }),
+    connectDisposable
   ];
 
   // Push disposables to context subscriptions
-  context.subscriptions.push(...disposables);
+  context.subscriptions.push(...disposables, connectButton);
 }
 
 // This method is called when your extension is deactivated
-function deactivate() {}
+function deactivate() {
+  if (socket) {
+    socket.disconnect();
+  }
+}
 
 module.exports = {
   activate,
