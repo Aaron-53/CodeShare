@@ -20,6 +20,10 @@
       {
         "command": "codeshare.fileSystem",
         "title": "File System"
+      },
+      {
+        "command": "codeshare.showRoomCode",
+        "title": "CodeShare: Show Room Code"
       }
     ]
   },
@@ -43,5 +47,10 @@
     "http": "^0.0.1-security",
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.8.0"
+  },
+  "repository": {
+  "type": "git",
+  "url": "https://github.com/Aaron-53/CodeShare.git"
   }
+
 }
